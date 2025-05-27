@@ -9,13 +9,14 @@
 #define L298M_IN2   4
 #define DS18B20_PIN 5
 
-#define PWM_MAX_VALUE   ((uint8_t)255U)
+#define PWM_MAX_VALUE                       ((uint8_t)255U)
 
-#define TERMINAL_BUFFER_SIZE  ((uint16_t)1024U)
-#define TERMINAL_INTERFACE    Serial
+#define TERMINAL_BUFFER_SIZE                ((uint16_t)1024U)
+#define TERMINAL_INTERFACE                  Serial
 
-#define APPL_CYCLIC_TIME_PERIOD ((uint16_t)1000U)
+#define APPL_CYCLIC_TIME_PERIOD             ((uint16_t)1000U)
 
+#define APPL_READ_INPUT_CARIAGE_RETURN_SIZE ((uint8_t)2U)
 #define APPL_STATE_ANALOG                   '0'
 #define APPL_STATE_DS18B20                  '1'
 #define APPL_STATE_SOLENOID_CTRL_FULL_ON    '2'
@@ -27,10 +28,10 @@
 /* Data type */
 typedef struct appl_type
 {
-  uint16_t u16_applc_cyclic_time;
+  uint16_t u16_cyclic_time;
   uint8_t u08_pwm_power;
   uint8_t u08_temp_id;
-  char    ch_menuState;
+  char    ch_menuState[APPL_READ_INPUT_CARIAGE_RETURN_SIZE];
   char    ch_data_stream[TERMINAL_BUFFER_SIZE];
   union
   {
@@ -59,9 +60,9 @@ void setup() {
   /* Temperature sensor addresses */
   uint8_t lu8_ds18b20_address[] = {40, 250, 31, 218, 4, 0, 0, 52};
   /* Variable set */
-  appl_inst.u16_applc_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
+  appl_inst.u16_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
   appl_inst.u08_pwm_power = PWM_MAX_VALUE;
-  appl_inst.ch_menuState = APPL_STATE_PRINT_MENU;
+  appl_inst.ch_menuState[0U] = APPL_STATE_PRINT_MENU;
   appl_inst.status = { 1 };
   /* Pin configuration */
   pinMode(L298M_ENA, OUTPUT);
@@ -91,23 +92,23 @@ void Appl_Cyclic(void)
   /* Read menu input mode */
   if (TERMINAL_INTERFACE.available())
   {
-    TERMINAL_INTERFACE.readBytes(&appl_inst.ch_menuState, 1);
+    TERMINAL_INTERFACE.readBytes(appl_inst.ch_menuState, APPL_READ_INPUT_CARIAGE_RETURN_SIZE);
   }
 
   /* Application's state machine */
-  switch(appl_inst.ch_menuState)
+  switch(appl_inst.ch_menuState[0U])
   {
     case APPL_STATE_ANALOG: /* Analog valuse */
     {
       /* Decrement application cyclic time preiod */
-      if (appl_inst.u16_applc_cyclic_time > 0U)
+      if (appl_inst.u16_cyclic_time > 0U)
       {
-        appl_inst.u16_applc_cyclic_time--;
+        appl_inst.u16_cyclic_time--;
       }
       else
       {
         /* Reset cyclic timer value */
-        appl_inst.u16_applc_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
+        appl_inst.u16_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
         /* Read analog values of the knobs */
         gu16_t0_knob = analogRead(T0_KNOB);
         gu16_t1_knob = analogRead(T1_KNOB);
@@ -122,14 +123,14 @@ void Appl_Cyclic(void)
     case APPL_STATE_DS18B20: /* Temperatur sensor data */
     {
       /* Decrement application cyclic time preiod */
-      if (appl_inst.u16_applc_cyclic_time > 0U)
+      if (appl_inst.u16_cyclic_time > 0U)
       {
-        appl_inst.u16_applc_cyclic_time--;
+        appl_inst.u16_cyclic_time--;
       }
       else
       {
         /* Reset cyclic timer value */
-        appl_inst.u16_applc_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
+        appl_inst.u16_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
         /* Get temperature */
         TERMINAL_INTERFACE.println(ds.getTempC());
       }
@@ -142,7 +143,7 @@ void Appl_Cyclic(void)
       appl_inst.u08_pwm_power = PWM_MAX_VALUE;
       analogWrite(L298M_ENA, appl_inst.u08_pwm_power);
       /* Go to idle state */
-      appl_inst.ch_menuState = APPL_STATE_IDLE_STATE;
+      appl_inst.ch_menuState[0U] = APPL_STATE_IDLE_STATE;
       break;
     }
 
@@ -152,7 +153,7 @@ void Appl_Cyclic(void)
       appl_inst.u08_pwm_power = 0U;
       analogWrite(L298M_ENA, appl_inst.u08_pwm_power);
       /* Go to idle state */
-      appl_inst.ch_menuState = APPL_STATE_IDLE_STATE;
+      appl_inst.ch_menuState[0U] = APPL_STATE_IDLE_STATE;
       break;
     }
 
@@ -162,14 +163,14 @@ void Appl_Cyclic(void)
       digitalWrite(L298M_IN1, HIGH);
       digitalWrite(L298M_IN2, LOW);
       /* Decrement application cyclic time preiod */
-      if (appl_inst.u16_applc_cyclic_time > 0U)
+      if (appl_inst.u16_cyclic_time > 0U)
       {
-        appl_inst.u16_applc_cyclic_time--;
+        appl_inst.u16_cyclic_time--;
       }
       else
       {
         /* Reset cyclic timer value */
-        appl_inst.u16_applc_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
+        appl_inst.u16_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
         /* PWM power update */
         appl_inst.u08_pwm_power -= 10U;
         analogWrite(L298M_ENA, appl_inst.u08_pwm_power);
@@ -183,21 +184,22 @@ void Appl_Cyclic(void)
       TERMINAL_INTERFACE.write("Menu:\n\r");
       TERMINAL_INTERFACE.write(" 0 - T0 and T1 knob value\n\r");
       TERMINAL_INTERFACE.write(" 1 - Temperature sensor value\n\r");
-      TERMINAL_INTERFACE.write(" 2 - Solenoid valve control - full power\n\r");
-      TERMINAL_INTERFACE.write(" 3 - Solenoid valve control - off\n\r");
+      TERMINAL_INTERFACE.write(" 2 - Solenoid valve control - close\n\r");
+      TERMINAL_INTERFACE.write(" 3 - Solenoid valve control - open\n\r");
       TERMINAL_INTERFACE.write(" 4 - Solenoid valve control - increase/decrease\n\r");
       TERMINAL_INTERFACE.write(" 5 - Print this menu\n\r");
       TERMINAL_INTERFACE.write("   - ");
       /* Reset terminal print timer */
-      appl_inst.u16_applc_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
+      appl_inst.u16_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
       /* Go to idle state */
-      appl_inst.ch_menuState = APPL_STATE_IDLE_STATE;
+      appl_inst.ch_menuState[0U] = APPL_STATE_IDLE_STATE;
       break;
     }
 
     case APPL_STATE_IDLE_STATE:
     {
       /* Idle state. Do nothing */
+      break;
     }
 
     default:

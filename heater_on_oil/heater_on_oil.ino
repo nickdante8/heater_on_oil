@@ -1,5 +1,4 @@
 #include "stdint.h"
-// #include "DS18B20.h"
 #include "OneWire.h"
 #include "DallasTemperature.h"
 
@@ -9,6 +8,7 @@
 #define L298M_ENA   3
 #define L298M_IN1   2
 #define L298M_IN2   4
+#define GLOW_PLUG   5
 #define DS18B20_PIN 8
 
 #define PWM_MAX_VALUE                       ((uint8_t)255U)
@@ -19,16 +19,16 @@
 #define APPL_CYCLIC_TIME_PERIOD             ((uint16_t)1000U)
 
 #define APPL_READ_INPUT_CARIAGE_RETURN_SIZE ((uint8_t)2U)
-#define APPL_STATE_PRINT_MENU               '0'
-#define APPL_STATE_ANALOG                   '1'
-#define APPL_STATE_DS18B20                  '2'
-#define APPL_STATE_SOLENOID_CTRL_FULL_ON    '3'
-#define APPL_STATE_SOLENOID_CTRL_FULL_OFF   '4'
-#define APPL_STATE_SOLENOID_CTRL_RISE_FALL  '5'
-#define APPL_STATE_SOLENOID_KNOB_CONTROL    '6'
-#define APPL_STATE_TIME_CONVERT_FACTOR      '7'
-#define APPL_STATE_IDLE_STATE               '8'
-
+#define APPL_STATE_PRINT_MENU                   '0'
+#define APPL_STATE_ANALOG                       '1'
+#define APPL_STATE_DS18B20                      '2'
+#define APPL_STATE_SOLENOID_CTRL_FULL_ON        '3'
+#define APPL_STATE_SOLENOID_CTRL_FULL_OFF       '4'
+#define APPL_STATE_SOLENOID_CTRL_RISE_FALL      '5'
+#define APPL_STATE_SOLENOID_KNOB_CONTROL        '6'
+#define APPL_STATE_TIME_CONVERT_FACTOR          '7'
+#define APPL_STATE_SOLENOID_KNOB_GLOW_PLG_CTRL  '8'
+#define APPL_STATE_IDLE_STATE                   '9'
 
 // Setup a oneWire instance to communicate with any OneWire device
 OneWire oneWire(DS18B20_PIN);
@@ -83,29 +83,21 @@ void setup() {
   appl_inst.ch_menuState[0U] = APPL_STATE_PRINT_MENU;
   appl_inst.status = { 1 };
   /* Pin configuration */
-  // pinMode(L298M_ENA, OUTPUT);
-  // pinMode(L298M_IN1, OUTPUT);
-  // pinMode(L298M_IN2, OUTPUT);
-  // /* Set solenoid direction and turn it off */
-  // digitalWrite(L298M_IN1, HIGH);
-  // digitalWrite(L298M_IN2, LOW);
-  // analogWrite(L298M_ENA, 0);
+  pinMode(L298M_ENA, OUTPUT);
+  pinMode(L298M_IN1, OUTPUT);
+  pinMode(L298M_IN2, OUTPUT);
+  pinMode(GLOW_PLUG, OUTPUT);
+  analogWrite(GLOW_PLUG, 0);
+  /* Set solenoid direction and turn it off */
+  digitalWrite(L298M_IN1, HIGH);
+  digitalWrite(L298M_IN2, LOW);
+  analogWrite(L298M_ENA, 0);
   /* Configure Uart to see output results */
   TERMINAL_INTERFACE.begin(115200);
   /* Select temperature sensro from bus */
-  // appl_inst.u08_temp_id = ds.select(lu8_ds18b20_address);
-  // if (appl_inst.u08_temp_id)
-  // {
-  //   TERMINAL_INTERFACE.print("Temperature device found with address ");
-  //   TERMINAL_INTERFACE.println(appl_inst.u08_temp_id);
-  // }
-  // else
-  // {
-  //   TERMINAL_INTERFACE.print("Temperature device not found!");
-  //   TERMINAL_INTERFACE.println(appl_inst.u08_temp_id);
-  // }
   sensors.begin();
 
+  /* Analog reference */
   analogReference(EXTERNAL);
 }
 
@@ -197,7 +189,6 @@ void Appl_Cyclic(void)
         /* Reset cyclic timer value */
         appl_inst.u16_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
         /* Get temperature */
-        // TERMINAL_INTERFACE.println(ds.getTempC());
         sensors.requestTemperatures();
         TERMINAL_INTERFACE.println(sensors.getTempCByIndex(0));
       }
@@ -255,6 +246,7 @@ void Appl_Cyclic(void)
       TERMINAL_INTERFACE.write(" 5 - Solenoid valve control - increase/decrease\n\r");
       TERMINAL_INTERFACE.write(" 6 - Solenoid knob control\n\r");
       TERMINAL_INTERFACE.write(" 7 - Time convert factor T0 and T1\n\r");
+      TERMINAL_INTERFACE.write(" 8 - Solenoid knob glow plug control\n\r");
       TERMINAL_INTERFACE.write("   - ");
       /* Reset terminal print timer */
       appl_inst.u16_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
@@ -339,6 +331,36 @@ void Appl_Cyclic(void)
       /* Go to menu state */
       appl_inst.ch_menuState[0U] = APPL_STATE_PRINT_MENU;
 
+      break;
+    }
+
+    case APPL_STATE_SOLENOID_KNOB_GLOW_PLG_CTRL:
+    {
+      uint8_t lu08_pwm_power = uint8_t((gu16_t0_knob_adc * (uint32_t)255u) / (uint16_t)1023U);
+
+      /* Limit power */
+      if (lu08_pwm_power > 255)
+      {
+        lu08_pwm_power = 255;
+      }
+
+      /* Print current applied power */
+      if (appl_inst.u16_cyclic_time > 0U)
+      {
+        appl_inst.u16_cyclic_time--;
+      }
+      else
+      {
+        /* Reset cyclic timer value */
+        appl_inst.u16_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
+        /* Construct string output */
+        sprintf(appl_inst.ch_data_stream, "%4.1d %u\n\r", gu16_t0_knob_adc, lu08_pwm_power);
+        /* Print buffer */
+        TERMINAL_INTERFACE.write(appl_inst.ch_data_stream);
+      }
+      
+      /* Write new PWM */
+      analogWrite(GLOW_PLUG, lu08_pwm_power);
       break;
     }
 

@@ -65,10 +65,14 @@ void Appl_Plot(void)
     /* Plot data */
     TERMINAL_INTERFACE.print("Tref:");
     TERMINAL_INTERFACE.print(Temperature_GetRef());
+    TERMINAL_INTERFACE.print("TRawRef:");
+    TERMINAL_INTERFACE.print(Temperature_GetRawRef());
     TERMINAL_INTERFACE.print(",Tacc:");
     TERMINAL_INTERFACE.print(Temperature_GetAcc());
-    TERMINAL_INTERFACE.print(",Solenoid:");
+    TERMINAL_INTERFACE.print(",SolenoidLogic:");
     TERMINAL_INTERFACE.print(Solenoid_GetState());
+    TERMINAL_INTERFACE.print(",SolenoidRaw:");
+    TERMINAL_INTERFACE.print(Solenoid_GetRawState());
     TERMINAL_INTERFACE.print(",PlugPower:");
     TERMINAL_INTERFACE.println(GlwoPlug_GetCurrentPwm());
     /* Update interval */

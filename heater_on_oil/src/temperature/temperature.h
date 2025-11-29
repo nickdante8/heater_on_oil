@@ -4,6 +4,7 @@
 #include "../common/common.h"
 
 float Temperature_GetAcc(void);
+uint16_t Temperature_GetRawRef(void);
 uint16_t Temperature_GetRef(void);
 void Temperature_Init(void);
 void Temperature_Cyclic(void);

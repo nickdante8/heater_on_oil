@@ -1,4 +1,4 @@
-#include "../common/common.h"
+#include "solenoid.h"
 
 #define SOLENOID_L298M_ENA   3
 #define SOLENOID_L298M_IN1   2
@@ -12,12 +12,23 @@ STD_HighLow Solenoid_GetState(void)
     STD_HighLow lu16_state = STD_LOW;
     uint16_t lu16_pwm = analogRead(SOLENOID_L298M_ENA);
 
-    if (lu16_pwm > 512U)
+    if (lu16_pwm > 128U)
     {
         lu16_state = STD_HIGH;
     }
+    else
+    {
+        lu16_state = STD_LOW;
+    }
 
     return lu16_state;
+}
+
+uint16_t Solenoid_GetRawState(void)
+{
+    uint16_t lu16_pwm = analogRead(SOLENOID_L298M_ENA);
+
+    return lu16_pwm;
 }
 
 void Solenoid_OnOff(STD_OnOff on_off_state)

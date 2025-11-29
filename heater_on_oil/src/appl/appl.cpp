@@ -16,6 +16,7 @@
 #define TERMINAL_INTERFACE                  Serial
 
 #define APPL_CYCLIC_TIME_PERIOD             ((uint16_t)1000U)
+#define APPL_CYCLIC_GLOW_PLUG_TIME_PERIOD   ((uint16_t)5000U)
 
 #define APPL_READ_INPUT_CARIAGE_RETURN_SIZE ((uint8_t)2U)
 #define APPL_STATE_PRINT_MENU               '0'
@@ -31,6 +32,7 @@
 typedef struct appl_type
 {
   uint16_t u16_cyclic_time;
+  uint16_t u16_glow_plug_test_time;
   uint8_t u08_pwm_power;
   char    ch_menuState[APPL_READ_INPUT_CARIAGE_RETURN_SIZE];
   char    ch_data_stream[TERMINAL_BUFFER_SIZE];
@@ -126,8 +128,17 @@ void Appl_FSTM(void)
     case APPL_STATE_GLOW_PLUG_ON:
     {
       GlowPlug_OnOff(STD_ON);
-      /* Go to idle state */
-      appl_inst.ch_menuState[0U] = APPL_STATE_IDLE_STATE;
+      if (appl_inst.u16_glow_plug_test_time > 0U)
+      {
+          appl_inst.u16_glow_plug_test_time--;
+      }
+      else
+      {
+        /* Go to idle state */
+        appl_inst.ch_menuState[0U] = APPL_STATE_IDLE_STATE;
+        /* Update time */
+        appl_inst.u16_glow_plug_test_time = APPL_CYCLIC_GLOW_PLUG_TIME_PERIOD;
+      }
       break;
     }
 
@@ -157,6 +168,7 @@ void Appl_Init(void)
 {
   /* Variable set */
   appl_inst.u16_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
+  appl_inst.u16_glow_plug_test_time = APPL_CYCLIC_GLOW_PLUG_TIME_PERIOD;
   appl_inst.u08_pwm_power = PWM_MAX_VALUE;
   appl_inst.ch_menuState[0U] = APPL_STATE_PRINT_MENU;
   appl_inst.status = { 1 };

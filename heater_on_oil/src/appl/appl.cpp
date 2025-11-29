@@ -15,7 +15,7 @@
 #define TERMINAL_BUFFER_SIZE                ((uint16_t)1024U)
 #define TERMINAL_INTERFACE                  Serial
 
-#define APPL_CYCLIC_PLOT_TIME_PERIOD        ((uint16_t)10U)
+#define APPL_CYCLIC_PLOT_TIME_PERIOD        ((uint16_t)500U)
 #define APPL_CYCLIC_TIME_PERIOD             ((uint16_t)1000U)
 #define APPL_CYCLIC_GLOW_PLUG_TIME_PERIOD   ((uint16_t)5000U)
 
@@ -68,7 +68,7 @@ void Appl_Plot(void)
     TERMINAL_INTERFACE.print(",Tacc:");
     TERMINAL_INTERFACE.print(Temperature_GetAcc());
     TERMINAL_INTERFACE.print(",Solenoid:");
-    TERMINAL_INTERFACE.print(Temperature_GetAcc());
+    TERMINAL_INTERFACE.print(Solenoid_GetState());
     TERMINAL_INTERFACE.print(",PlugPower:");
     TERMINAL_INTERFACE.println(GlwoPlug_GetCurrentPwm());
     /* Update interval */

@@ -7,6 +7,19 @@
 #define SOLENOID_POWER_OFF     ((uint8_t)0U)
 #define SOLENOID_POWER_ON_MAX  ((uint8_t)255U)
 
+STD_HighLow Solenoid_GetState(void)
+{
+    STD_HighLow lu16_state = STD_LOW;
+    uint16_t lu16_pwm = analogRead(SOLENOID_L298M_ENA);
+
+    if (lu16_pwm > 512U)
+    {
+        lu16_state = STD_HIGH;
+    }
+
+    return lu16_state;
+}
+
 void Solenoid_OnOff(STD_OnOff on_off_state)
 {
     if (on_off_state == STD_ON)

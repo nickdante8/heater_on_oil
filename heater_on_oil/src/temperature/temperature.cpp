@@ -9,17 +9,18 @@
 #define TEMPERATURE_REF_MIN ((int8_t)-20)
 
 #define DS18B20_PIN 8
-#define TEMPERATURE_REQUEST_TIME_PERIOD ((uint16_t)1000U)
+#define TEMPERATURE_REQUEST_TIME_PERIOD ((uint16_t)500U)
 
 /* Private variables */
 static OneWire oneWire(DS18B20_PIN);
 static DallasTemperature sensors(&oneWire);
 
 static uint16_t u16_cyclic_time = 0U;
+static float gf_acc_temp;
 
 float Temperature_GetAcc(void)
 {
-    return sensors.getTempCByIndex(0);
+    return gf_acc_temp;
 }
 
 int16_t Temperature_GetRef(void)
@@ -33,7 +34,7 @@ int16_t Temperature_GetRef(void)
     /* Convert adc to desired temperature */
     li16_temp = ((lu16_adc * TEMPERATURE_REF_MAX) / T0_KNOB_MAX_ADC) + TEMPERATURE_REF_MIN;
 
-    return lu16_adc;
+    return li16_temp;
 }
 
 void Temperature_Init(void)
@@ -53,6 +54,7 @@ void Temperature_Cyclic(void)
     {
         /* Request temperature */
         sensors.requestTemperatures();
+        gf_acc_temp = sensors.getTempCByIndex(0);
 
         /* Update variables */
         u16_cyclic_time = TEMPERATURE_REQUEST_TIME_PERIOD;

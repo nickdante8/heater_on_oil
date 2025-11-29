@@ -2,6 +2,12 @@
 #include "OneWire.h"
 #include "DallasTemperature.h"
 
+#ifdef ARDUINO_SAMD_NANO_33_IOT
+#define VOLTAGE_REF AR_EXTERNAL
+#elif ARDUINO_NANO
+#define VOLTAGE_REF EXTERNAL
+#endif
+
 /* Global defines */
 #define T0_KNOB   PIN_A0
 #define T1_KNOB   PIN_A1
@@ -98,7 +104,7 @@ void setup() {
   sensors.begin();
 
   /* Analog reference */
-  analogReference(EXTERNAL);
+  analogReference(VOLTAGE_REF);
 }
 
 void ADC_Update(void)

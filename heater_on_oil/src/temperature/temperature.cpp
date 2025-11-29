@@ -4,9 +4,8 @@
 
 #define T0_KNOB   PIN_A0
 // #define T1_KNOB   PIN_A1
-#define T0_KNOB_MAX_ADC     ((uint16_t)1023)
-#define TEMPERATURE_REF_MAX ((int8_t)100)
-#define TEMPERATURE_REF_MIN ((int8_t)0)
+#define T0_KNOB_MAX_ADC     ((uint16_t)1023U)
+#define TEMPERATURE_REF_MAX ((uint8_t)100U)
 
 #define DS18B20_PIN 8
 #define TEMPERATURE_REQUEST_TIME_PERIOD ((uint16_t)1000U)
@@ -23,18 +22,18 @@ float Temperature_GetAcc(void)
     return gf_acc_temp;
 }
 
-int16_t Temperature_GetRef(void)
+uint8_t Temperature_GetRef(void)
 {
     uint16_t lu16_adc = 0U;
-    int16_t li16_temp = 0;
+    uint8_t lu08_temp = 0;
     
     /* Read ADC value of current temperature */
     lu16_adc = analogRead(T0_KNOB);
 
     /* Convert adc to desired temperature */
-    li16_temp = ((lu16_adc * TEMPERATURE_REF_MAX) / T0_KNOB_MAX_ADC);
+    lu08_temp = (uint8_t)(((uint32_t)lu16_adc * TEMPERATURE_REF_MAX) / T0_KNOB_MAX_ADC);
 
-    return li16_temp;
+    return lu08_temp;
 }
 
 uint16_t Temperature_GetRawRef(void)

@@ -9,24 +9,12 @@
 
 STD_HighLow Solenoid_GetState(void)
 {
-    STD_HighLow lu16_state = STD_LOW;
-    uint16_t lu16_pwm = analogRead(SOLENOID_L298M_ENA);
-
-    if (lu16_pwm > 128U)
-    {
-        lu16_state = STD_HIGH;
-    }
-    else
-    {
-        lu16_state = STD_LOW;
-    }
-
-    return lu16_state;
+    return digitalRead(SOLENOID_L298M_ENA);
 }
 
 uint16_t Solenoid_GetRawState(void)
 {
-    uint16_t lu16_pwm = analogRead(SOLENOID_L298M_ENA);
+    uint16_t lu16_pwm = digitalRead(SOLENOID_L298M_ENA);
 
     return lu16_pwm;
 }

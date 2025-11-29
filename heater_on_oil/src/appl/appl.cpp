@@ -65,7 +65,7 @@ void Appl_Plot(void)
     /* Plot data */
     TERMINAL_INTERFACE.print("Tref:");
     TERMINAL_INTERFACE.print(Temperature_GetRef());
-    TERMINAL_INTERFACE.print("TRawRef:");
+    TERMINAL_INTERFACE.print(",TRawRef:");
     TERMINAL_INTERFACE.print(Temperature_GetRawRef());
     TERMINAL_INTERFACE.print(",Tacc:");
     TERMINAL_INTERFACE.print(Temperature_GetAcc());

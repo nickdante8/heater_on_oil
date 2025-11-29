@@ -5,7 +5,7 @@
 
 #ifdef ARDUINO_SAMD_NANO_33_IOT
 #define VOLTAGE_REF AR_EXTERNAL
-#elif ARDUINO_NANO
+#else
 #define VOLTAGE_REF EXTERNAL
 #endif
 
@@ -114,7 +114,7 @@ void Appl_FSTM(void)
       appl_inst.ch_menuState[0U] = APPL_STATE_IDLE_STATE;
       break;
     }
-    
+
     case APPL_STATE_SOLENOID_CTRL_FULL_OFF:
     {
       Solenoid_OnOff(STD_OFF);

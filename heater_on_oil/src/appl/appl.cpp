@@ -15,6 +15,7 @@
 #define TERMINAL_BUFFER_SIZE                ((uint16_t)1024U)
 #define TERMINAL_INTERFACE                  Serial
 
+#define APPL_CYCLIC_PLOT_TIME_PERIOD        ((uint16_t)10U)
 #define APPL_CYCLIC_TIME_PERIOD             ((uint16_t)1000U)
 #define APPL_CYCLIC_GLOW_PLUG_TIME_PERIOD   ((uint16_t)5000U)
 
@@ -31,6 +32,7 @@
 /* Data type */
 typedef struct appl_type
 {
+  uint16_t u16_plot_time;
   uint16_t u16_cyclic_time;
   uint16_t u16_glow_plug_test_time;
   uint8_t u08_pwm_power;
@@ -54,14 +56,24 @@ static ts_appl_type appl_inst;
 
 void Appl_Plot(void)
 {
-  TERMINAL_INTERFACE.print("Tref");
-  TERMINAL_INTERFACE.print(Temperature_GetRef());
-  TERMINAL_INTERFACE.print("Tacc");
-  TERMINAL_INTERFACE.print(Temperature_GetAcc());
-  TERMINAL_INTERFACE.print("Solenoid");
-  TERMINAL_INTERFACE.print(Temperature_GetAcc());
-  TERMINAL_INTERFACE.print("PlugPower");
-  TERMINAL_INTERFACE.print(GlwoPlug_GetCurrentPwm());
+  if (appl_inst.u16_plot_time > 0)
+  {
+    appl_inst.u16_plot_time--;
+  }
+  else
+  {
+    /* Plot data */
+    TERMINAL_INTERFACE.print("Tref:");
+    TERMINAL_INTERFACE.print(Temperature_GetRef());
+    TERMINAL_INTERFACE.print(",Tacc:");
+    TERMINAL_INTERFACE.print(Temperature_GetAcc());
+    TERMINAL_INTERFACE.print(",Solenoid:");
+    TERMINAL_INTERFACE.print(Temperature_GetAcc());
+    TERMINAL_INTERFACE.print(",PlugPower:");
+    TERMINAL_INTERFACE.println(GlwoPlug_GetCurrentPwm());
+    /* Update interval */
+    appl_inst.u16_plot_time = APPL_CYCLIC_PLOT_TIME_PERIOD;
+  }
 }
 
 void Appl_FSTM(void)
@@ -135,7 +147,7 @@ void Appl_FSTM(void)
       else
       {
         /* Go to idle state */
-        appl_inst.ch_menuState[0U] = APPL_STATE_IDLE_STATE;
+        appl_inst.ch_menuState[0U] = APPL_STATE_GLOW_PLUG_OFF;
         /* Update time */
         appl_inst.u16_glow_plug_test_time = APPL_CYCLIC_GLOW_PLUG_TIME_PERIOD;
       }
@@ -147,6 +159,8 @@ void Appl_FSTM(void)
       GlowPlug_OnOff(STD_OFF);
       /* Go to idle state */
       appl_inst.ch_menuState[0U] = APPL_STATE_IDLE_STATE;
+      /* Update time */
+      appl_inst.u16_glow_plug_test_time = APPL_CYCLIC_GLOW_PLUG_TIME_PERIOD;
       break;
     }
 
@@ -167,6 +181,7 @@ void Appl_FSTM(void)
 void Appl_Init(void)
 {
   /* Variable set */
+  appl_inst.u16_plot_time = APPL_CYCLIC_PLOT_TIME_PERIOD;
   appl_inst.u16_cyclic_time = APPL_CYCLIC_TIME_PERIOD;
   appl_inst.u16_glow_plug_test_time = APPL_CYCLIC_GLOW_PLUG_TIME_PERIOD;
   appl_inst.u08_pwm_power = PWM_MAX_VALUE;

@@ -1,0 +1,16 @@
+profiles:
+  profile-nano33_IoT:
+    fqbn: arduino:samd:nano_33_iot
+    platforms:
+      - platform: arduino:samd (1.8.14)
+    libraries:
+      - OneWire (2.3.8)
+      - DallasTemperature (4.0.5)
+    programmer: ""
+    port_config:
+      baudrate: "115200"
+      lineEnding: "\r\n"
+      bits: "8"
+      parity: none
+      stop_bits: "1"
+    port: COM3
